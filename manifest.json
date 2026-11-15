@@ -1,0 +1,10 @@
+{
+  "id": "editor-polish",
+  "name": "Editor Polish",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "Adjustable editor content width (presets, custom width, and per-note override), drag-to-resize table columns, and tasteful table, typography, and scrollbar polish.",
+  "author": "zhuangh7",
+  "authorUrl": "https://github.com/zhuangh7",
+  "isDesktopOnly": false
+}

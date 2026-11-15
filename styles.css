@@ -1,0 +1,164 @@
+/* Editor Polish — 编辑界面美化 */
+
+/* ========== 正文宽度 ========== */
+body.editor-polish .markdown-source-view.mod-cm6 .cm-sizer,
+body.editor-polish .markdown-preview-view .markdown-preview-sizer {
+  max-width: var(--ep-line-width, 800px);
+  margin-left: auto !important;
+  margin-right: auto !important;
+  transition: max-width 120ms ease;
+}
+
+/* ========== 表格列宽拖拽 ========== */
+body.ep-resize-enabled table.ep-resizable {
+  table-layout: auto;
+}
+body.ep-resize-enabled table.ep-resizable th.ep-th {
+  position: relative;
+}
+body.ep-resize-enabled .ep-col-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 9px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  z-index: 5;
+}
+body.ep-resize-enabled .ep-col-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 18%;
+  bottom: 18%;
+  right: 4px;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background 100ms ease, width 100ms ease;
+}
+body.ep-resize-enabled table.ep-resizable:hover .ep-col-resize-handle::after {
+  background: var(--background-modifier-border-hover, var(--background-modifier-border));
+}
+body.ep-resize-enabled .ep-col-resize-handle:hover::after {
+  background: var(--interactive-accent);
+  width: 3px;
+}
+body.ep-col-resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+body.ep-col-resizing .ep-col-resize-handle::after {
+  background: var(--interactive-accent);
+}
+.ep-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* ========== 表格美化 ========== */
+body.ep-polish-tables .markdown-source-view table,
+body.ep-polish-tables .markdown-preview-view table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+body.ep-polish-tables .markdown-source-view table th,
+body.ep-polish-tables .markdown-source-view table td,
+body.ep-polish-tables .markdown-preview-view table th,
+body.ep-polish-tables .markdown-preview-view table td {
+  border: none;
+  border-right: 1px solid var(--background-modifier-border);
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding: 6px 12px;
+  vertical-align: top;
+  word-break: break-word;
+}
+body.ep-polish-tables .markdown-source-view table th:last-child,
+body.ep-polish-tables .markdown-source-view table td:last-child,
+body.ep-polish-tables .markdown-preview-view table th:last-child,
+body.ep-polish-tables .markdown-preview-view table td:last-child {
+  border-right: none;
+}
+body.ep-polish-tables .markdown-source-view table tr:last-child td,
+body.ep-polish-tables .markdown-preview-view table tr:last-child td {
+  border-bottom: none;
+}
+body.ep-polish-tables .markdown-source-view table thead th,
+body.ep-polish-tables .markdown-source-view table tr:first-child th,
+body.ep-polish-tables .markdown-preview-view table thead th,
+body.ep-polish-tables .markdown-preview-view table tr:first-child th {
+  background: var(--background-secondary);
+  font-weight: 600;
+  text-align: left;
+}
+body.ep-polish-tables .markdown-source-view table tbody tr:nth-child(even) td,
+body.ep-polish-tables .markdown-preview-view table tbody tr:nth-child(even) td {
+  background: var(--background-primary-alt);
+}
+body.ep-polish-tables .markdown-source-view table tbody tr:hover td,
+body.ep-polish-tables .markdown-preview-view table tbody tr:hover td {
+  background: var(--background-modifier-hover);
+}
+
+/* ========== 排版美化 ========== */
+body.ep-polish-typography .markdown-preview-view,
+body.ep-polish-typography .markdown-source-view.mod-cm6 .cm-content {
+  line-height: 1.7;
+}
+body.ep-polish-typography .markdown-preview-view h2,
+body.ep-polish-typography .markdown-preview-view h3 {
+  margin-top: 1.6em;
+}
+body.ep-polish-typography .markdown-preview-view blockquote,
+body.ep-polish-typography .markdown-source-view.mod-cm6 .cm-blockquote {
+  border-left: 3px solid var(--interactive-accent);
+}
+body.ep-polish-typography .markdown-preview-view :not(pre) > code {
+  background: var(--background-secondary);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+body.ep-polish-typography .markdown-preview-view hr {
+  border: none;
+  border-top: 2px solid var(--background-modifier-border);
+  margin: 1.6em 0;
+}
+
+/* ========== 滚动条美化 ========== */
+body.ep-polish-scrollbar ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+body.ep-polish-scrollbar ::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+body.ep-polish-scrollbar ::-webkit-scrollbar-thumb:hover {
+  background: var(--background-modifier-border-hover, var(--interactive-accent));
+  background-clip: padding-box;
+}
+body.ep-polish-scrollbar ::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ========== 状态栏 & 弹窗 ========== */
+.ep-statusbar { cursor: pointer; }
+.ep-modal-hint {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  margin: 0.3em 0 0.9em;
+}
+.ep-width-input { width: 100%; }
+.ep-modal-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 1em;
+}

@@ -1,0 +1,8 @@
+# Obsidian plugin user data (do not ship)
+data.json
+
+# OS / editor
+.DS_Store
+
+# Node (only if you later add a TS build)
+node_modules/

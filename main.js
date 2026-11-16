@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS = {
   polishTables: true,
   polishTypography: true,
   polishScrollbar: true,
+  showToc: true,
 };
 
 function normalizeLen(v) {
@@ -72,6 +73,7 @@ class EditorPolishPlugin extends obsidian.Plugin {
     this.addCommand({ id: 'ep-width-full', name: '正文宽度设为全屏', callback: () => this.setWidthMode('full') });
     this.addCommand({ id: 'ep-reset-current-table', name: '重置当前笔记的表格列宽', callback: () => this.resetActiveNoteTables() });
     this.addCommand({ id: 'ep-reset-all-tables', name: '清除所有已保存的表格列宽', callback: () => this.clearAllTableWidths() });
+    this.addCommand({ id: 'ep-toggle-toc', name: '显示/隐藏 Markdown 目录', callback: () => this.toggleToc() });
 
     const reapply = obsidian.debounce(() => this.applyLeafOverrides(), 120, true);
     this.registerEvent(this.app.workspace.on('active-leaf-change', reapply));
@@ -84,20 +86,29 @@ class EditorPolishPlugin extends obsidian.Plugin {
     this.registerEvent(this.app.workspace.on('layout-change', resweep));
     this.registerEvent(this.app.workspace.on('editor-change', resweep));
 
+    const refreshToc = obsidian.debounce(() => this.refreshTocAll(), 200, true);
+    this.registerEvent(this.app.workspace.on('active-leaf-change', refreshToc));
+    this.registerEvent(this.app.workspace.on('layout-change', refreshToc));
+    this.registerEvent(this.app.workspace.on('file-open', refreshToc));
+    this.registerEvent(this.app.metadataCache.on('changed', refreshToc));
+    this.registerEvent(this.app.workspace.on('editor-change', refreshToc));
+
     this.app.workspace.onLayoutReady(() => {
       this.sweepTables();
       this.applyLeafOverrides();
+      this.refreshTocAll();
     });
   }
 
   onunload() {
     document.body.classList.remove(
       'editor-polish', 'ep-resize-enabled', 'ep-polish-tables',
-      'ep-polish-typography', 'ep-polish-scrollbar', 'ep-col-resizing'
+      'ep-polish-typography', 'ep-polish-scrollbar', 'ep-col-resizing', 'ep-toc-enabled'
     );
     document.body.style.removeProperty('--ep-line-width');
     this.teardownTables(true);
     this.clearLeafOverrides();
+    this.removeAllToc();
   }
 
   async loadSettings() {
@@ -116,6 +127,7 @@ class EditorPolishPlugin extends obsidian.Plugin {
     b.classList.toggle('ep-polish-tables', !!this.settings.polishTables);
     b.classList.toggle('ep-polish-typography', !!this.settings.polishTypography);
     b.classList.toggle('ep-polish-scrollbar', !!this.settings.polishScrollbar);
+    b.classList.toggle('ep-toc-enabled', !!this.settings.showToc);
   }
 
   applyGlobalWidth() {
@@ -418,6 +430,111 @@ class EditorPolishPlugin extends obsidian.Plugin {
     if (this.settings.resizeTables) this.sweepTables();
     else this.teardownTables(true);
   }
+
+  // ---------- Markdown 目录 (大纲) ----------
+
+  async toggleToc() {
+    this.settings.showToc = !this.settings.showToc;
+    await this.saveSettings();
+    this.applyBodyClasses();
+    this.refreshTocAll();
+    new obsidian.Notice(this.settings.showToc ? '已显示 Markdown 目录' : '已隐藏 Markdown 目录');
+  }
+
+  removeAllToc() {
+    document.querySelectorAll('.ep-toc').forEach((e) => e.remove());
+  }
+
+  refreshTocAll() {
+    if (!this.settings.showToc) {
+      this.removeAllToc();
+      return;
+    }
+    const leaves = this.app.workspace.getLeavesOfType('markdown');
+    leaves.forEach((leaf) => this.renderTocForLeaf(leaf));
+  }
+
+  buildTocItems(file) {
+    const cache = this.app.metadataCache.getFileCache(file);
+    const hs = (cache && cache.headings) || [];
+    if (hs.length === 0) return [];
+    let minLevel = 6;
+    for (const h of hs) if (h.level < minLevel) minLevel = h.level;
+    return hs.map((h) => ({
+      text: h.heading,
+      level: h.level,
+      rel: Math.min(5, Math.max(0, h.level - minLevel)),
+      line: h.position.start.line,
+    }));
+  }
+
+  renderTocForLeaf(leaf) {
+    const view = leaf.view;
+    const isMd = view instanceof obsidian.MarkdownView;
+    const content = isMd ? view.contentEl : null;
+    let toc = content ? content.querySelector(':scope > .ep-toc') : null;
+    if (!this.settings.showToc || !isMd || !view.file) {
+      if (toc) toc.remove();
+      return;
+    }
+    const items = this.buildTocItems(view.file);
+    if (items.length < 2) {
+      if (toc) toc.remove();
+      return;
+    }
+    if (!toc) toc = content.createDiv('ep-toc');
+    toc.empty();
+    const header = toc.createDiv('ep-toc-title');
+    header.setText('目录');
+    const list = toc.createDiv('ep-toc-list');
+    items.forEach((it) => {
+      const row = list.createDiv({ cls: 'ep-toc-item ep-toc-l' + it.rel });
+      row.setText(it.text && it.text.length ? it.text : '(空标题)');
+      row.setAttribute('title', it.text || '');
+      row.dataset.line = String(it.line);
+      this.registerDomEvent(row, 'click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.scrollToHeading(view, it.line);
+      });
+    });
+    this.updateTocActive(leaf);
+  }
+
+  scrollToHeading(view, line) {
+    const mode = view.getMode ? view.getMode() : 'source';
+    if (mode === 'preview') {
+      view.setEphemeralState({ line });
+      return;
+    }
+    const ed = view.editor;
+    if (ed) {
+      ed.focus();
+      ed.setCursor({ line, ch: 0 });
+      ed.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+    } else {
+      view.setEphemeralState({ line });
+    }
+  }
+
+  updateTocActive(leaf) {
+    const view = leaf.view;
+    if (!(view instanceof obsidian.MarkdownView) || !view.file) return;
+    const toc = view.contentEl.querySelector(':scope > .ep-toc');
+    if (!toc) return;
+    const mode = view.getMode ? view.getMode() : 'source';
+    let activeLine = -1;
+    if (mode !== 'preview' && view.editor) activeLine = view.editor.getCursor().line;
+    const rows = Array.from(toc.querySelectorAll('.ep-toc-item'));
+    let activeEl = null;
+    if (activeLine >= 0) {
+      for (const r of rows) {
+        if (parseInt(r.dataset.line, 10) <= activeLine) activeEl = r;
+        else break;
+      }
+    }
+    rows.forEach((r) => r.classList.toggle('ep-toc-active', r === activeEl));
+  }
 }
 
 class WidthPromptModal extends obsidian.Modal {
@@ -575,6 +692,20 @@ class EditorPolishSettingTab extends obsidian.PluginSettingTab {
           this.plugin.settings.polishScrollbar = v;
           await this.plugin.saveSettings();
           this.plugin.applyBodyClasses();
+        })
+      );
+
+    new obsidian.Setting(containerEl).setName('目录 (大纲)').setHeading();
+
+    new obsidian.Setting(containerEl)
+      .setName('显示 Markdown 目录')
+      .setDesc('在编辑器左侧空白处悬浮显示当前笔记的标题目录，点击可跳转；标题少于 2 个时自动隐藏。')
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.showToc).onChange(async (v) => {
+          this.plugin.settings.showToc = v;
+          await this.plugin.saveSettings();
+          this.plugin.applyBodyClasses();
+          this.plugin.refreshTocAll();
         })
       );
   }

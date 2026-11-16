@@ -162,3 +162,67 @@ body.ep-polish-scrollbar ::-webkit-scrollbar-corner {
   justify-content: flex-end;
   margin-top: 1em;
 }
+
+/* ========== Markdown 目录 (大纲) ========== */
+body.ep-toc-enabled .view-content {
+  position: relative;
+}
+.ep-toc {
+  position: absolute;
+  top: 52px;
+  left: 12px;
+  width: 200px;
+  max-height: 64vh;
+  overflow-y: auto;
+  z-index: 15;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  background: transparent;
+  opacity: 0.62;
+  transition: opacity 120ms ease, background 120ms ease, box-shadow 120ms ease;
+  scrollbar-width: thin;
+}
+.ep-toc:hover {
+  opacity: 1;
+  background: var(--background-secondary);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.ep-toc-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin: 0 0 4px 2px;
+  user-select: none;
+}
+.ep-toc-item {
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+.ep-toc-item:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+.ep-toc-active {
+  color: var(--interactive-accent);
+  font-weight: 600;
+}
+.ep-toc-l0 { padding-left: 6px; }
+.ep-toc-l1 { padding-left: 16px; }
+.ep-toc-l2 { padding-left: 26px; }
+.ep-toc-l3 { padding-left: 36px; }
+.ep-toc-l4 { padding-left: 46px; }
+.ep-toc-l5 { padding-left: 56px; }
+
+/* 窄窗口/移动端左侧空间不足时，自动隐藏以免遮挡正文 */
+@media (max-width: 900px) {
+  .ep-toc { display: none; }
+}
